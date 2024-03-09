@@ -3,26 +3,48 @@
  */
 package ca4006;
 
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class Main {
+    public static int current_tick = 0;
     public static int TICK_TIME = 100;
     public static Random rand = new Random(42);
     public static int numberOfStoreAssistants = 3;
+    public static int numberOfCustomers = 3;
 
     public static List<String> sections = List.of("electronics", "clothing", "furniture", "toys", "sporting goods", "books");
+    public static HashMap<String, Section> sectionMap = new HashMap<>();
+
+    public static DeliveryBox deliveryBox = new DeliveryBox();
 
     public static void main(String[] args) {
+        final ExecutorService executorService = Executors.newFixedThreadPool(numberOfCustomers + numberOfStoreAssistants);
+        for (String section : sections) {
+            sectionMap.put(section, new Section(section, 5));
+        }
         System.out.println("TICK_TIME: " + TICK_TIME);
 
-        DeliveryBox deliveryBox = new DeliveryBox();
         System.out.println(deliveryBox);
+
+        for (int i = 0; i < numberOfCustomers; i++) {
+            executorService.execute(new Customer());
+        }
+        for (int i = 0; i < numberOfStoreAssistants; i++) {
+            executorService.execute(new StoreAssistant());
+        }
+
 
         while (true) {
             try {
                 Thread.sleep(TICK_TIME);
+                current_tick += 1;
+                System.out.println("Tick: " + current_tick);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
