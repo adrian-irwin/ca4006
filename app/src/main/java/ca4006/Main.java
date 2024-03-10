@@ -24,6 +24,19 @@ public class Main {
     public static DeliveryBox deliveryBox = new DeliveryBox();
 
     public static void main(String[] args) {
+        for (int i = 0; i < args.length/2; i++) {
+            try {
+                if (args[i * 2].equalsIgnoreCase("assistants")) {
+                    numberOfStoreAssistants = Integer.parseInt(args[i * 2 + 1]);
+                } else if (args[i * 2].equalsIgnoreCase("customers")) {
+                    numberOfCustomers = Integer.parseInt(args[i * 2 + 1]);
+                }
+            }catch (NumberFormatException e) {
+                System.out.println("could not parse int from argument at index: " + (i * 2 + 1));
+            }
+        }
+        System.out.println("The store has " + numberOfCustomers + " customers and " + numberOfStoreAssistants + " assistants");
+
         final ExecutorService executorService = Executors.newFixedThreadPool(numberOfCustomers + numberOfStoreAssistants);
         for (String section : sections) {
             sectionMap.put(section, new Section(section, 5));
