@@ -9,11 +9,20 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 public class Main {
+    public static String RESET = "\033[0m";
+    public static String GREEN = "\033[0;32m";
+    public static String YELLOW = "\033[0;33m";
+    public static String BLUE = "\033[0;34m";
+    public static String PURPLE = "\033[0;35m";
+    public static String CYAN = "\033[0;36m";
+    public static String WHITE = "\033[0;37m";
+    public static String BLACK = "\033[0;30m";
     public static int current_tick = 0;
-    public static int TICK_TIME = 100;
+    public static int TICK_TIME = 50;
     public static Random rand = new Random(42);
     public static int numberOfStoreAssistants = 3;
     public static int numberOfCustomers = 3;
@@ -23,15 +32,21 @@ public class Main {
 
     public static DeliveryBox deliveryBox = new DeliveryBox();
 
+    public static int cust_count = 0;
+
+    public static String getCurrentTickTime() {
+        return YELLOW + "Tick " + current_tick + ": " + RESET;
+    }
+
     public static void main(String[] args) {
-        for (int i = 0; i < args.length/2; i++) {
+        for (int i = 0; i < args.length / 2; i++) {
             try {
                 if (args[i * 2].equalsIgnoreCase("assistants")) {
                     numberOfStoreAssistants = Integer.parseInt(args[i * 2 + 1]);
                 } else if (args[i * 2].equalsIgnoreCase("customers")) {
                     numberOfCustomers = Integer.parseInt(args[i * 2 + 1]);
                 }
-            }catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 System.out.println("could not parse int from argument at index: " + (i * 2 + 1));
             }
         }
@@ -45,11 +60,8 @@ public class Main {
 
         System.out.println(deliveryBox);
 
-        for (int i = 0; i < numberOfCustomers; i++) {
-            executorService.execute(new Customer());
-        }
         for (int i = 0; i < numberOfStoreAssistants; i++) {
-            executorService.execute(new StoreAssistant());
+            executorService.execute(new StoreAssistant("StoreAssistant" + i));
         }
 
 
@@ -57,17 +69,38 @@ public class Main {
             try {
                 Thread.sleep(TICK_TIME);
                 current_tick += 1;
-                System.out.println("Tick: " + current_tick);
+                System.out.println(getCurrentTickTime());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            int randomInt = rand.nextInt(100);
 
-            if (randomInt == 0) {
+            if (current_tick % 50 == 0) {
+                ThreadPoolExecutor tpe = (ThreadPoolExecutor) executorService;
+                System.out.println("Current pool size: " + tpe.getPoolSize());
+                System.out.println("Current number of active threads: " + tpe.getActiveCount());
+                System.out.println("Core pool size: " + tpe.getCorePoolSize());
+                System.out.println("Size of queue: " + tpe.getQueue().size());
+                System.out.println("Queue: " + tpe.getQueue());
+            }
+
+            int randomInt100 = rand.nextInt(100);
+            int randomInt10 = rand.nextInt(10);
+
+            if (randomInt100 == 0) {
                 deliveryBox.newDelivery();
-                System.out.println(deliveryBox);
+                System.out.println(getCurrentTickTime() + "deliveryBox.newDelivery() activated" + deliveryBox);
+            }
+
+            if (randomInt10 == 0) {
+                executorService.execute(new Customer("Customer" + cust_count++));
+            }
+
+            if (current_tick % 100 == 0) {
+                System.out.println(getCurrentTickTime() + "deliveryBox: " + deliveryBox);
+                for (String section : sections) {
+                    System.out.println(getCurrentTickTime() + section + ": " + sectionMap.get(section).stock);
+                }
             }
         }
     }
-
 }

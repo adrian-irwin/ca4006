@@ -4,12 +4,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class StoreAssistant implements Runnable {
-    public static Map<String, Integer> itemsHeld = new HashMap<>();
+    public Map<String, Integer> itemsHeld = new HashMap<>();
+    public String name;
 
-    public StoreAssistant() {
+
+    public StoreAssistant(String name) {
+        this.name = name;
         for (String section : Main.sections) {
             itemsHeld.put(section, 0);
         }
+    }
+
+    public int sumOfItemsHeld() {
+        int sum = 0;
+        for (int value : itemsHeld.values()) {
+            sum += value;
+        }
+        return sum;
     }
 
     public void stockItem(int itemsToStock, String sectionToStock) throws InterruptedException {
@@ -21,7 +32,7 @@ public class StoreAssistant implements Runnable {
     }
 
     public void walkToSection() throws InterruptedException {
-        int sum = itemsHeld.values().stream().mapToInt(Integer::intValue).sum();
+        int sum = sumOfItemsHeld();
         long ticks_to_walk = 10 + sum;
         Thread.sleep(Main.TICK_TIME * ticks_to_walk);
     }
@@ -30,9 +41,16 @@ public class StoreAssistant implements Runnable {
     public void run() {
         // pick up items from delivery box, go to sections of items held, stock item, walk back to delivery box
         while (true) {
-            for (int i = 0; i < 10; i++) {
-                String randomSection = Main.sections.get(Main.rand.nextInt(Main.sections.size()));
-                itemsHeld.put(randomSection, itemsHeld.get(randomSection) + 1);
+            try {
+                walkToSection();
+                Main.deliveryBox.takeFromDeliveryBox(this);
+                for (String section : Main.sections) {
+                    if (itemsHeld.get(section) > 0) {
+                        stockItem(itemsHeld.get(section), section);
+                    }
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
