@@ -6,12 +6,14 @@ import java.util.Map;
 public class StoreAssistant implements Runnable {
     public Map<String, Integer> itemsHeld = new HashMap<>();
     public String name;
+    public int stockTries;
 
     public StoreAssistant(String name) {
         this.name = name;
         for (String section : Main.sections) {
             itemsHeld.put(section, 0);
         }
+        this.stockTries = 0;
     }
 
     public int sumOfItemsHeld() {
@@ -28,6 +30,7 @@ public class StoreAssistant implements Runnable {
             boolean stockedStatus = Main.sectionMap.get(sectionToStock).addToSection(name);
             if (!stockedStatus) {
                 System.out.println(Main.PURPLE + "__________DEBUG: " + Main.RED + name + " could not stock item in section: " + sectionToStock + Main.RESET);
+                stockTries++;
                 break;
             }
             itemsHeld.put(sectionToStock, itemsHeld.get(sectionToStock) - 1);
@@ -46,8 +49,11 @@ public class StoreAssistant implements Runnable {
         while (true) {
             try {
                 System.out.println(Main.PURPLE + "__________DEBUG: " + Main.getCurrentTickTime() + Main.CYAN + name + " has " + itemsHeld + Main.RESET);
-                Main.deliveryBox.takeFromDeliveryBox(this);
-                walkToSection();
+                if (sumOfItemsHeld() <= 0 || stockTries >= 3) {
+                    Main.deliveryBox.takeFromDeliveryBox(this);
+                    walkToSection();
+                    stockTries = 0;
+                }
                 for (String section : Main.sections) {
                     if (itemsHeld.get(section) > 0) {
                         stockItem(itemsHeld.get(section), section);

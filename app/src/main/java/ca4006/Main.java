@@ -4,6 +4,7 @@
 package ca4006;
 
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
@@ -31,6 +32,10 @@ public class Main {
     public static HashMap<String, Section> sectionMap = new HashMap<>();
     public static DeliveryBox deliveryBox = new DeliveryBox();
     public static int cust_count = 0;
+
+    public static void setSections(List<String> sections) {
+        Main.sections = sections;
+    }
 
     public static String getCurrentTickTime() {
         return YELLOW + "Tick " + current_tick + ": " + RESET;
@@ -67,7 +72,7 @@ public class Main {
             try {
                 Thread.sleep(TICK_TIME);
                 current_tick += 1;
-                System.out.println(getCurrentTickTime());
+//                System.out.println(getCurrentTickTime());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -84,11 +89,13 @@ public class Main {
             int randomInt100 = rand.nextInt(100);
             int randomInt10 = rand.nextInt(10);
 
+            // randomly add a delivery around every 100 ticks
             if (randomInt100 == 0) {
                 deliveryBox.newDelivery();
                 System.out.println(getCurrentTickTime() + "deliveryBox.newDelivery() activated" + deliveryBox);
             }
 
+            // randomly add a customer around every 10 ticks
             if (randomInt10 == 0) {
                 executorService.execute(new Customer("Customer" + cust_count++));
             }
@@ -98,6 +105,13 @@ public class Main {
                 for (String section : sections) {
                     System.out.println(getCurrentTickTime() + section + ": " + sectionMap.get(section).stock);
                 }
+            }
+
+            // sort sections by stock every 5 ticks
+            if (current_tick % 5 == 0) {
+                List<String> sortedSections = new java.util.ArrayList<>(List.copyOf(sections));
+                sortedSections.sort(Comparator.comparingInt(o -> sectionMap.get(o).stock));
+                setSections(sortedSections);
             }
         }
     }
