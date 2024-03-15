@@ -2,9 +2,11 @@ package ca4006;
 
 public class Customer implements Runnable {
     public String name;
+    public String sectionToPurchase;
 
-    public Customer(String name) {
+    public Customer(String name, String sectionToPurchase) {
         this.name = name;
+        this.sectionToPurchase = sectionToPurchase;
     }
 
     public void purchaseItem(String sectionToPurchase) throws InterruptedException {
@@ -15,11 +17,10 @@ public class Customer implements Runnable {
 
     @Override
     public void run() {
-        String section = Main.sections.get(Main.rand.nextInt(Main.sections.size()));
         while (true) {
-            if (Main.sectionMap.get(section).stock > 0) {
+            if (Main.sectionMap.get(this.sectionToPurchase).stock > 0) {
                 try {
-                    purchaseItem(section);
+                    purchaseItem(this.sectionToPurchase);
                     break;
                 } catch (InterruptedException e) {
                     e.printStackTrace();

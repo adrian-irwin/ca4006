@@ -37,17 +37,18 @@ public class DeliveryBox {
                 throw new RuntimeException(e);
             }
         }
-        int itemsHeldByAssistant = storeAssistant.sumOfItemsHeld();
         for (String section : Main.sections) {
+            int itemsHeldByAssistant = storeAssistant.sumOfItemsHeld();
             if (itemsHeldByAssistant >= 10) {
                 break;
             }
-            int items = deliveryBox.get(section);
+            int items = (deliveryBox.get(section) >= 3) ? Math.min(3, 10 - itemsHeldByAssistant) : deliveryBox.get(section);
+            System.out.println(Main.getCurrentTickTime() + Utils.GREEN + storeAssistant.name + " is trying to take " + items + " items from " + section + " from delivery box" + Utils.RESET);
             if (items + itemsHeldByAssistant > 10) {
-                continue;
+                break;
             }
             storeAssistant.itemsHeld.put(section, storeAssistant.itemsHeld.get(section) + items);
-            deliveryBox.put(section, 0);
+            deliveryBox.put(section, deliveryBox.get(section) - items);
         }
         System.out.println(Main.getCurrentTickTime() + Utils.GREEN + "End of takeFromDeliveryBox" + deliveryBox + " by " + storeAssistant.name + ", store assistant now has: " + storeAssistant.itemsHeld + Utils.RESET);
         notify();

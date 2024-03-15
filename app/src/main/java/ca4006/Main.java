@@ -18,11 +18,12 @@ public class Main {
     public static int TICK_TIME = 50;
     public static Random rand = new Random(42);
     public static int numberOfStoreAssistants = 3;
-    public static int numberOfCustomers = 3;
+    public static int maxCustomersPerSection = 3;
     public static List<String> sections = List.of("electronics", "clothing", "furniture", "toys", "sporting goods", "books");
     public static HashMap<String, Section> sectionMap = new HashMap<>();
     public static DeliveryBox deliveryBox = new DeliveryBox();
-    public static int cust_count = 0;
+    public static int customer_count = 0;
+    public static HashMap<String, ExecutorService> sectionExecutors = new HashMap<>();
 
     public static void setSections(List<String> sections) {
         Main.sections = sections;
@@ -38,24 +39,26 @@ public class Main {
                 if (args[i * 2].equalsIgnoreCase("assistants")) {
                     numberOfStoreAssistants = Integer.parseInt(args[i * 2 + 1]);
                 } else if (args[i * 2].equalsIgnoreCase("customers")) {
-                    numberOfCustomers = Integer.parseInt(args[i * 2 + 1]);
+                    maxCustomersPerSection = Integer.parseInt(args[i * 2 + 1]);
                 }
             } catch (NumberFormatException e) {
                 System.out.println("could not parse int from argument at index: " + (i * 2 + 1));
             }
         }
-        System.out.println("The store has " + numberOfCustomers + " customers and " + numberOfStoreAssistants + " assistants");
+        System.out.println("The store has " + maxCustomersPerSection + " customers (maximum per section) and " + numberOfStoreAssistants + " assistants");
 
-        final ExecutorService executorService = Executors.newFixedThreadPool(numberOfCustomers + numberOfStoreAssistants);
+        final ExecutorService storeAssistantExecutorService = Executors.newFixedThreadPool(numberOfStoreAssistants);
+
         for (String section : sections) {
             sectionMap.put(section, new Section(section, 5, 10));
+            sectionExecutors.put(section, Executors.newFixedThreadPool(maxCustomersPerSection));
         }
         System.out.println("TICK_TIME: " + TICK_TIME);
 
         System.out.println(deliveryBox);
 
         for (int i = 0; i < numberOfStoreAssistants; i++) {
-            executorService.execute(new StoreAssistant("StoreAssistant" + i));
+            storeAssistantExecutorService.execute(new StoreAssistant("StoreAssistant" + i));
         }
 
 
@@ -63,18 +66,8 @@ public class Main {
             try {
                 Thread.sleep(TICK_TIME);
                 current_tick += 1;
-//                System.out.println(getCurrentTickTime());
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
-
-            if (current_tick % 50 == 0) {
-                ThreadPoolExecutor tpe = (ThreadPoolExecutor) executorService;
-                System.out.println("Current pool size: " + tpe.getPoolSize());
-                System.out.println("Current number of active threads: " + tpe.getActiveCount());
-                System.out.println("Core pool size: " + tpe.getCorePoolSize());
-                System.out.println("Size of queue: " + tpe.getQueue().size());
-                System.out.println("Queue: " + tpe.getQueue());
             }
 
             int randomInt100 = rand.nextInt(100);
@@ -88,7 +81,11 @@ public class Main {
 
             // randomly add a customer around every 10 ticks
             if (randomInt10 == 0) {
-                executorService.execute(new Customer("Customer" + cust_count++));
+                String sectionToPurchase = sections.get(rand.nextInt(sections.size()));
+                ThreadPoolExecutor currentSectionExecutors = (ThreadPoolExecutor) sectionExecutors.get(sectionToPurchase);
+                if (currentSectionExecutors.getQueue().size() < 10) {
+                    currentSectionExecutors.execute(new Customer("Customer" + customer_count++, sectionToPurchase));
+                }
             }
 
             if (current_tick % 100 == 0) {
@@ -98,12 +95,9 @@ public class Main {
                 }
             }
 
-            // sort sections by stock every 5 ticks
-            if (current_tick % 5 == 0) {
-                List<String> sortedSections = new java.util.ArrayList<>(List.copyOf(sections));
-                sortedSections.sort(Comparator.comparingInt(o -> sectionMap.get(o).stock));
-                setSections(sortedSections);
-            }
+            List<String> sortedSections = new java.util.ArrayList<>(List.copyOf(sections));
+            sortedSections.sort(Comparator.comparingInt(o -> sectionMap.get(o).stock));
+            setSections(sortedSections);
         }
     }
 }

@@ -29,8 +29,8 @@ public class StoreAssistant implements Runnable {
             Thread.sleep(Main.TICK_TIME);
             boolean stockedStatus = Main.sectionMap.get(sectionToStock).addToSection(name);
             if (!stockedStatus) {
-                System.out.println(Utils.PURPLE + "__________DEBUG: " + Utils.RED + name + " could not stock item in section: " + sectionToStock + Utils.RESET);
-                stockTries++;
+//                System.out.println(Utils.PURPLE + "__________DEBUG: " + Utils.RED + name + " could not stock item in section: " + sectionToStock + Utils.RESET);
+                stockTries += 1;
                 break;
             }
             itemsHeld.put(sectionToStock, itemsHeld.get(sectionToStock) - 1);
@@ -48,7 +48,7 @@ public class StoreAssistant implements Runnable {
         // pick up items from delivery box, go to sections of items held, stock item, walk back to delivery box
         while (true) {
             try {
-                System.out.println(Utils.PURPLE + "__________DEBUG: " + Main.getCurrentTickTime() + Utils.CYAN + name + " has " + itemsHeld + Utils.RESET);
+//                System.out.println(Utils.PURPLE + "__________DEBUG: " + Main.getCurrentTickTime() + Utils.CYAN + name + " has " + itemsHeld + Utils.RESET);
                 if (sumOfItemsHeld() <= 0 || stockTries >= 3) {
                     Main.deliveryBox.takeFromDeliveryBox(this);
                     walkToSection();
