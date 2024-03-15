@@ -14,6 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 public class Main {
     public static String RESET = "\033[0m";
+    public static String RED = "\033[0;31m";
     public static String GREEN = "\033[0;32m";
     public static String YELLOW = "\033[0;33m";
     public static String BLUE = "\033[0;34m";
@@ -26,12 +27,9 @@ public class Main {
     public static Random rand = new Random(42);
     public static int numberOfStoreAssistants = 3;
     public static int numberOfCustomers = 3;
-
     public static List<String> sections = List.of("electronics", "clothing", "furniture", "toys", "sporting goods", "books");
     public static HashMap<String, Section> sectionMap = new HashMap<>();
-
     public static DeliveryBox deliveryBox = new DeliveryBox();
-
     public static int cust_count = 0;
 
     public static String getCurrentTickTime() {
@@ -54,7 +52,7 @@ public class Main {
 
         final ExecutorService executorService = Executors.newFixedThreadPool(numberOfCustomers + numberOfStoreAssistants);
         for (String section : sections) {
-            sectionMap.put(section, new Section(section, 5));
+            sectionMap.put(section, new Section(section, 5, 10));
         }
         System.out.println("TICK_TIME: " + TICK_TIME);
 

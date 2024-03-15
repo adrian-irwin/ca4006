@@ -26,7 +26,11 @@ public class StoreAssistant implements Runnable {
     public void stockItem(int itemsToStock, String sectionToStock) throws InterruptedException {
         for (int i = 0; i < itemsToStock; i++) {
             Thread.sleep(Main.TICK_TIME);
-            Main.sectionMap.get(sectionToStock).addToSection();
+            boolean stockedStatus = Main.sectionMap.get(sectionToStock).addToSection(name);
+            if (!stockedStatus) {
+                System.out.println(Main.PURPLE + "__________DEBUG: " + Main.RED + name + " could not stock item in section: " + sectionToStock + Main.RESET);
+                break;
+            }
             itemsHeld.put(sectionToStock, itemsHeld.get(sectionToStock) - 1);
         }
     }
@@ -43,6 +47,7 @@ public class StoreAssistant implements Runnable {
         while (true) {
             try {
                 walkToSection();
+                System.out.println(Main.PURPLE + "__________DEBUG: " + Main.CYAN + name + " has " + itemsHeld + Main.RESET);
                 Main.deliveryBox.takeFromDeliveryBox(this);
                 for (String section : Main.sections) {
                     if (itemsHeld.get(section) > 0) {

@@ -8,9 +8,9 @@ public class Customer implements Runnable {
     }
 
     public void purchaseItem(String sectionToPurchase) throws InterruptedException {
-        System.out.println(Main.getCurrentTickTime() + name + " purchasing item from " + sectionToPurchase);
         Section section = Main.sectionMap.get(sectionToPurchase);
         section.takeFromSection();
+        System.out.println(Main.getCurrentTickTime() + name + " purchasing item from " + sectionToPurchase);
     }
 
     @Override
