@@ -7,7 +7,6 @@ public class StoreAssistant implements Runnable {
     public Map<String, Integer> itemsHeld = new HashMap<>();
     public String name;
 
-
     public StoreAssistant(String name) {
         this.name = name;
         for (String section : Main.sections) {
@@ -46,12 +45,13 @@ public class StoreAssistant implements Runnable {
         // pick up items from delivery box, go to sections of items held, stock item, walk back to delivery box
         while (true) {
             try {
-                walkToSection();
-                System.out.println(Main.PURPLE + "__________DEBUG: " + Main.CYAN + name + " has " + itemsHeld + Main.RESET);
+                System.out.println(Main.PURPLE + "__________DEBUG: " + Main.getCurrentTickTime() + Main.CYAN + name + " has " + itemsHeld + Main.RESET);
                 Main.deliveryBox.takeFromDeliveryBox(this);
+                walkToSection();
                 for (String section : Main.sections) {
                     if (itemsHeld.get(section) > 0) {
                         stockItem(itemsHeld.get(section), section);
+                        walkToSection();
                     }
                 }
             } catch (InterruptedException e) {

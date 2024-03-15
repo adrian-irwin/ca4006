@@ -11,15 +11,12 @@ public class Section {
         this.maxStock = maxStock;
     }
 
-    public synchronized void takeFromSection() {
-        if (this.stock <= 0) {
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+    public synchronized void takeFromSection() throws InterruptedException {
+        while (this.stock <= 0) {
+            wait();
         }
         this.stock -= 1;
+        Thread.sleep(Main.TICK_TIME);
     }
 
     public synchronized boolean addToSection(String assistantName) {
