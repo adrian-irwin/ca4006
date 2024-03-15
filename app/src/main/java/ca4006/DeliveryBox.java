@@ -29,7 +29,7 @@ public class DeliveryBox {
     }
 
     public synchronized void takeFromDeliveryBox(StoreAssistant storeAssistant) throws InterruptedException {
-        System.out.println(Main.getCurrentTickTime() + Main.GREEN + "Start of takeFromDeliveryBox: " + deliveryBox + " by " + storeAssistant.name + ", store assistant currently has: " + storeAssistant.itemsHeld + Main.RESET);
+        System.out.println(Main.getCurrentTickTime() + Utils.GREEN + "Start of takeFromDeliveryBox: " + deliveryBox + " by " + storeAssistant.name + ", store assistant currently has: " + storeAssistant.itemsHeld + Utils.RESET);
         while (sumOfItemsInDeliveryBox() <= 0) {
             try {
                 wait();
@@ -49,7 +49,7 @@ public class DeliveryBox {
             storeAssistant.itemsHeld.put(section, storeAssistant.itemsHeld.get(section) + items);
             deliveryBox.put(section, 0);
         }
-        System.out.println(Main.getCurrentTickTime() + Main.GREEN + "End of takeFromDeliveryBox" + deliveryBox + " by " + storeAssistant.name + ", store assistant now has: " + storeAssistant.itemsHeld + Main.RESET);
+        System.out.println(Main.getCurrentTickTime() + Utils.GREEN + "End of takeFromDeliveryBox" + deliveryBox + " by " + storeAssistant.name + ", store assistant now has: " + storeAssistant.itemsHeld + Utils.RESET);
         notify();
     }
 

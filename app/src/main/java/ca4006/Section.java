@@ -20,7 +20,7 @@ public class Section {
     }
 
     public synchronized boolean addToSection(String assistantName) {
-        System.out.println(Main.PURPLE + "__________DEBUG: " + Main.getCurrentTickTime() + assistantName + " is adding to section: " + this.name + "; before restock: " + this.stock);
+        System.out.println(Utils.PURPLE + "__________DEBUG: " + Main.getCurrentTickTime() + assistantName + " is adding to section: " + this.name + "; before restock: " + this.stock);
         if (this.stock >= this.maxStock) {
             return false;
         }
