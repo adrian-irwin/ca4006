@@ -11,11 +11,13 @@ public class Section {
         this.maxStock = maxStock;
     }
 
-    public synchronized void takeFromSection() throws InterruptedException {
+    public synchronized void takeFromSection(Integer startTick) throws InterruptedException {
         while (this.stock <= 0) {
             wait();
         }
         this.stock -= 1;
+        Integer endTick = Main.current_tick;
+        Main.customerWaitTimes.add(endTick - startTick);
         Thread.sleep(Main.TICK_TIME);
     }
 

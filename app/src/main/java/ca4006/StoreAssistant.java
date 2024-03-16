@@ -45,12 +45,17 @@ public class StoreAssistant implements Runnable {
 
     @Override
     public void run() {
+        int prevPickup = 0;
+        int newPickup;
         // pick up items from delivery box, go to sections of items held, stock item, walk back to delivery box
         while (true) {
             try {
 //                System.out.println(Utils.PURPLE + "__________DEBUG: " + Main.getCurrentTickTime() + Utils.CYAN + name + " has " + itemsHeld + Utils.RESET);
                 if (sumOfItemsHeld() <= 0 || stockTries >= 3) {
+                    newPickup = Main.current_tick;
                     Main.deliveryBox.takeFromDeliveryBox(this);
+                    Main.assistantDeliveryPickups.add(newPickup - prevPickup);
+                    prevPickup = newPickup;
                     walkToSection();
                     stockTries = 0;
                 }

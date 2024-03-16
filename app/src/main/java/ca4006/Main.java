@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -28,6 +29,8 @@ public class Main {
     public static void setSections(List<String> sections) {
         Main.sections = sections;
     }
+    public static ArrayList<Integer> customerWaitTimes = new ArrayList<>();
+    public static ArrayList<Integer> assistantDeliveryPickups = new ArrayList<>();
 
     public static String getCurrentTickTime() {
         return Utils.YELLOW + "Tick " + current_tick + ": " + Utils.RESET;
@@ -98,6 +101,16 @@ public class Main {
             List<String> sortedSections = new java.util.ArrayList<>(List.copyOf(sections));
             sortedSections.sort(Comparator.comparingInt(o -> sectionMap.get(o).stock));
             setSections(sortedSections);
+
+            if (current_tick % 1000 == 0) {
+                System.out.println(Utils.BLUE + "All customer wait times = " + customerWaitTimes);
+                System.out.println(Utils.BLUE + "Average customer wait time = " + (customerWaitTimes.stream().mapToInt(a -> a).average().getAsDouble()));
+                customerWaitTimes = new ArrayList<>();
+
+                System.out.println(Utils.BLUE + "All times between assistant delivery pickups = " + assistantDeliveryPickups);
+                System.out.println(Utils.BLUE + "Average time between assistant delivery pickups = " + (assistantDeliveryPickups.stream().mapToInt(a -> a).average().getAsDouble()));
+                assistantDeliveryPickups = new ArrayList<>();
+            }
         }
     }
 }
