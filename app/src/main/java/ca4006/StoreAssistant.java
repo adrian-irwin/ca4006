@@ -28,7 +28,6 @@ public class StoreAssistant implements Runnable {
         System.out.println(Main.getCurrentTickTime() + Utils.GREEN + name + " began stocking " + itemsToStock + " items in section: " + sectionToStock);
         for (int i = 0; i < itemsToStock; i++) {
             if (!Main.sectionMap.get(sectionToStock).addToSection()) {
-                System.out.println(Utils.PURPLE + "__________DEBUG: " + Utils.RED + name + " could not stock item in section: " + sectionToStock + Utils.RESET);
                 stockTries += 1;
                 break;
             }
