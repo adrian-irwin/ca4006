@@ -4,11 +4,7 @@
 package ca4006;
 
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -16,55 +12,107 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 public class Main {
     public static int current_tick = 0;
-    public static int TICK_TIME = 50;
+    public static int TICK_TIME = 100;
     public static Random rand = new Random(42);
     public static int numberOfStoreAssistants = 3;
     public static int maxCustomersPerSection = 3;
+    public static int end_tick = -1;
     public static List<String> sections = List.of("electronics", "clothing", "furniture", "toys", "sporting goods", "books");
     public static HashMap<String, Section> sectionMap = new HashMap<>();
     public static DeliveryBox deliveryBox = new DeliveryBox();
     public static int customer_count = 0;
     public static HashMap<String, ExecutorService> sectionExecutors = new HashMap<>();
+    public static ArrayList<Integer> customerWaitTimes = new ArrayList<>();
+    public static ArrayList<Integer> assistantDeliveryPickups = new ArrayList<>();
+    public static ArrayList<Integer> allCustomerWaitTimes = new ArrayList<>();
+    public static ArrayList<Integer> allAssistantDeliveryPickups = new ArrayList<>();
+
+    public static void addCustomerWaitTime(int waitTime) {
+        customerWaitTimes.add(waitTime);
+        allCustomerWaitTimes.add(waitTime);
+    }
+
+    public static void addAssistantDeliveryPickup(int pickupTime) {
+        assistantDeliveryPickups.add(pickupTime);
+        allAssistantDeliveryPickups.add(pickupTime);
+    }
 
     public static void setSections(List<String> sections) {
         Main.sections = sections;
     }
-    public static ArrayList<Integer> customerWaitTimes = new ArrayList<>();
-    public static ArrayList<Integer> assistantDeliveryPickups = new ArrayList<>();
 
     public static String getCurrentTickTime() {
-        return Utils.YELLOW + "Tick " + current_tick + ": " + Utils.RESET;
+        return Utils.YELLOW + "[Tick " + current_tick + "]\t{Thread " + Thread.currentThread().getId() + "}\t\t" + Utils.RESET;
+    }
+
+    public static void sortSections() {
+        List<String> sortedSections = new java.util.ArrayList<>(List.copyOf(sections));
+        sortedSections.sort(Comparator.comparingInt(o -> sectionMap.get(o).stock));
+        setSections(sortedSections);
     }
 
     public static void main(String[] args) {
+        // parse arguments
         for (int i = 0; i < args.length / 2; i++) {
             try {
-                if (args[i * 2].equalsIgnoreCase("assistants")) {
-                    numberOfStoreAssistants = Integer.parseInt(args[i * 2 + 1]);
-                } else if (args[i * 2].equalsIgnoreCase("customers")) {
-                    maxCustomersPerSection = Integer.parseInt(args[i * 2 + 1]);
+                String arg = args[i * 2];
+                int value = Integer.parseInt(args[i * 2 + 1]);
+                if (value < 0) {
+                    System.out.println("Invalid value: " + value);
+                    continue;
+                }
+                switch (arg) {
+                    case "assistants":
+                        numberOfStoreAssistants = value;
+                        break;
+                    case "customers":
+                        maxCustomersPerSection = value;
+                        break;
+                    case "tick":
+                        TICK_TIME = value;
+                        break;
+                    case "end":
+                        end_tick = value * 1000;
+                        break;
+                    default:
+                        System.out.println("Invalid argument: " + arg);
+                        break;
                 }
             } catch (NumberFormatException e) {
                 System.out.println("could not parse int from argument at index: " + (i * 2 + 1));
             }
         }
-        System.out.println("The store has " + maxCustomersPerSection + " customers (maximum per section) and " + numberOfStoreAssistants + " assistants");
 
+        // print out the configuration made by the user
+        System.out.println("TICK_TIME: " + TICK_TIME);
+        System.out.println("The store has " + maxCustomersPerSection + " customers (max per section) and " + numberOfStoreAssistants + " assistants");
+        if (end_tick != -1) {
+            System.out.println("The store will close after " + end_tick / 1000 + " days (" + end_tick + " ticks)");
+        }
+
+        // create a thread pool for the store assistants
         final ExecutorService storeAssistantExecutorService = Executors.newFixedThreadPool(numberOfStoreAssistants);
 
+        // create a section and a thread pool for each section
         for (String section : sections) {
             sectionMap.put(section, new Section(section, 5, 10));
             sectionExecutors.put(section, Executors.newFixedThreadPool(maxCustomersPerSection));
         }
-        System.out.println("TICK_TIME: " + TICK_TIME);
 
-        System.out.println(deliveryBox);
-
+        // create store assistants
         for (int i = 0; i < numberOfStoreAssistants; i++) {
             storeAssistantExecutorService.execute(new StoreAssistant("StoreAssistant" + i));
         }
 
+        // handle cleanup on control-c
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            storeAssistantExecutorService.shutdown();
+            for (String section : sections) {
+                sectionExecutors.get(section).shutdown();
+            }
+        }));
 
+        // main loop
         while (true) {
             try {
                 Thread.sleep(TICK_TIME);
@@ -73,17 +121,13 @@ public class Main {
                 e.printStackTrace();
             }
 
-            int randomInt100 = rand.nextInt(100);
-            int randomInt10 = rand.nextInt(10);
-
             // randomly add a delivery around every 100 ticks
-            if (randomInt100 == 0) {
+            if (rand.nextInt(100) == 0) {
                 deliveryBox.newDelivery();
-                System.out.println(getCurrentTickTime() + "deliveryBox.newDelivery() activated" + deliveryBox);
             }
 
             // randomly add a customer around every 10 ticks
-            if (randomInt10 == 0) {
+            if (rand.nextInt(10) == 0) {
                 String sectionToPurchase = sections.get(rand.nextInt(sections.size()));
                 ThreadPoolExecutor currentSectionExecutors = (ThreadPoolExecutor) sectionExecutors.get(sectionToPurchase);
                 if (currentSectionExecutors.getQueue().size() < 10) {
@@ -91,25 +135,35 @@ public class Main {
                 }
             }
 
-            if (current_tick % 100 == 0) {
-                System.out.println(getCurrentTickTime() + "deliveryBox: " + deliveryBox);
-                for (String section : sections) {
-                    System.out.println(getCurrentTickTime() + section + ": " + sectionMap.get(section).stock);
-                }
-            }
+            // sort sections by stock so that sections with the least stock are prioritised
+            sortSections();
 
-            List<String> sortedSections = new java.util.ArrayList<>(List.copyOf(sections));
-            sortedSections.sort(Comparator.comparingInt(o -> sectionMap.get(o).stock));
-            setSections(sortedSections);
-
+            // print statistics every 1000 ticks
             if (current_tick % 1000 == 0) {
-                System.out.println(Utils.BLUE + "All customer wait times = " + customerWaitTimes);
-                System.out.println(Utils.BLUE + "Average customer wait time = " + (customerWaitTimes.stream().mapToInt(a -> a).average().getAsDouble()));
+                System.out.println(Utils.UNDERLINE + "Statistics for the day " + current_tick / 1000 + " (tick " + (current_tick - 1000) + " to " + current_tick + ")" + Utils.RESET);
+                System.out.println(Utils.BLUE + "Customer wait times = " + customerWaitTimes + Utils.RESET);
+                System.out.println(Utils.BLUE + "Average customer wait time = " + (customerWaitTimes.stream().mapToInt(a -> a).average().getAsDouble()) + Utils.RESET);
                 customerWaitTimes = new ArrayList<>();
 
-                System.out.println(Utils.BLUE + "All times between assistant delivery pickups = " + assistantDeliveryPickups);
-                System.out.println(Utils.BLUE + "Average time between assistant delivery pickups = " + (assistantDeliveryPickups.stream().mapToInt(a -> a).average().getAsDouble()));
+                System.out.println(Utils.BLUE + "Times between assistant delivery pickups = " + assistantDeliveryPickups + Utils.RESET);
+                System.out.println(Utils.BLUE + "Average time between assistant delivery pickups = " + (assistantDeliveryPickups.stream().mapToInt(a -> a).average().getAsDouble()) + Utils.RESET);
                 assistantDeliveryPickups = new ArrayList<>();
+            }
+
+
+            if (current_tick == end_tick) {
+                System.out.println("\n" + Utils.YELLOW_UNDERLINED + "Statistics for full runtime" + Utils.RESET);
+                System.out.println(Utils.BLUE + "Customer wait times = " + allCustomerWaitTimes + Utils.RESET);
+                System.out.println(Utils.BLUE + "Average customer wait time = " + (allCustomerWaitTimes.stream().mapToInt(a -> a).average().getAsDouble()) + Utils.RESET);
+
+                System.out.println(Utils.BLUE + "Times between assistant delivery pickups = " + allAssistantDeliveryPickups + Utils.RESET);
+                System.out.println(Utils.BLUE + "Average time between assistant delivery pickups = " + (allAssistantDeliveryPickups.stream().mapToInt(a -> a).average().getAsDouble()) + Utils.RESET);
+
+                storeAssistantExecutorService.shutdown();
+                for (String section : sections) {
+                    sectionExecutors.get(section).shutdown();
+                }
+                System.exit(0);
             }
         }
     }

@@ -8,6 +8,6 @@ public class Utils {
     public static String BLUE = "\033[0;34m";
     public static String PURPLE = "\033[0;35m";
     public static String CYAN = "\033[0;36m";
-    public static String WHITE = "\033[0;37m";
-    public static String BLACK = "\033[0;30m";
+    public static String UNDERLINE = "\033[4m";
+    public static String YELLOW_UNDERLINED = "\033[4;33m";
 }

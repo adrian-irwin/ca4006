@@ -21,15 +21,22 @@ public class DeliveryBox {
     }
 
     public synchronized void newDelivery() {
+        Map<String, Integer> itemsDelivered = new HashMap<>();
         for (int i = 0; i < 10; i++) {
             String randomSection = Main.sections.get(Main.rand.nextInt(Main.sections.size()));
             deliveryBox.put(randomSection, deliveryBox.get(randomSection) + 1);
+            itemsDelivered.put(randomSection, itemsDelivered.getOrDefault(randomSection, 0) + 1);
         }
+        System.out.print(Main.getCurrentTickTime() + Utils.PURPLE + "New delivery of items: ");
+        for (String section : itemsDelivered.keySet()) {
+            System.out.print("'" + section + "'=" + itemsDelivered.get(section) + " ");
+        }
+        System.out.println(Utils.RESET);
         notify();
     }
 
-    public synchronized void takeFromDeliveryBox(StoreAssistant storeAssistant) throws InterruptedException {
-        System.out.println(Main.getCurrentTickTime() + Utils.GREEN + "Start of takeFromDeliveryBox: " + deliveryBox + " by " + storeAssistant.name + ", store assistant currently has: " + storeAssistant.itemsHeld + Utils.RESET);
+    public synchronized Map<String, Integer> takeFromDeliveryBox(StoreAssistant storeAssistant) throws InterruptedException {
+        Map<String, Integer> itemsTaken = new HashMap<>();
         while (sumOfItemsInDeliveryBox() <= 0) {
             try {
                 wait();
@@ -43,15 +50,18 @@ public class DeliveryBox {
                 break;
             }
             int items = (deliveryBox.get(section) >= 3) ? Math.min(3, 10 - itemsHeldByAssistant) : deliveryBox.get(section);
-            System.out.println(Main.getCurrentTickTime() + Utils.GREEN + storeAssistant.name + " is trying to take " + items + " items from " + section + " from delivery box" + Utils.RESET);
+            if (items == 0) {
+                continue;
+            }
             if (items + itemsHeldByAssistant > 10) {
                 break;
             }
             storeAssistant.itemsHeld.put(section, storeAssistant.itemsHeld.get(section) + items);
             deliveryBox.put(section, deliveryBox.get(section) - items);
+            itemsTaken.put(section, items);
         }
-        System.out.println(Main.getCurrentTickTime() + Utils.GREEN + "End of takeFromDeliveryBox" + deliveryBox + " by " + storeAssistant.name + ", store assistant now has: " + storeAssistant.itemsHeld + Utils.RESET);
         notify();
+        return itemsTaken;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package ca4006;
 
+
 public class Section {
     public String name;
     public int stock;
@@ -11,22 +12,23 @@ public class Section {
         this.maxStock = maxStock;
     }
 
-    public synchronized void takeFromSection(Integer startTick) throws InterruptedException {
+    public synchronized int takeFromSection(Integer startTick) throws InterruptedException {
         while (this.stock <= 0) {
             wait();
         }
         this.stock -= 1;
-        Integer endTick = Main.current_tick;
-        Main.customerWaitTimes.add(endTick - startTick);
+        int waitTime = Main.current_tick - startTick;
+        Main.addCustomerWaitTime(waitTime);
         Thread.sleep(Main.TICK_TIME);
+        return waitTime;
     }
 
-    public synchronized boolean addToSection(String assistantName) {
+    public synchronized boolean addToSection() throws InterruptedException {
         if (this.stock >= this.maxStock) {
             return false;
         }
-//        System.out.println(Utils.PURPLE + "__________DEBUG: " + Main.getCurrentTickTime() + assistantName + " is adding to section: " + this.name + "; before restock: " + this.stock);
         this.stock += 1;
+        Thread.sleep(Main.TICK_TIME);
         notify();
         return true;
     }
